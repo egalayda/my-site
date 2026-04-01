@@ -9,6 +9,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Minimal weather styles that reuse site variables for a cohesive look */
+    .weather-card{display:inline-flex;align-items:center;gap:12px;background:var(--white);padding:10px 14px;border-radius:6px;border:1px solid var(--light);font-family:var(--sans);color:var(--black);max-width:220px}
+    .weather-emoji{font-size:24px;line-height:1}
+    .weather-info{display:flex;flex-direction:column}
+    .weather-temp{font-weight:600;font-size:16px}
+    .weather-desc{font-size:13px;color:var(--gray);margin-top:2px}
+    .weather-meta{font-size:11px;color:#909090;margin-top:6px}
+    @media (max-width:720px){.weather-card{max-width:160px;padding:8px 10px}}
+    /* center the widget in the footer on the homepage */
+    .footer{position:relative}
+    .footer .footer-weather{position:absolute;left:50%;top:calc(1.5rem + 4px);transform:translateX(-50%);z-index:2}
+    @media (max-width:720px){.footer .footer-weather{position:static;margin-top:0.75rem;transform:none}}
+  </style>
 </head>
 <body>
 
@@ -145,7 +159,74 @@
   <footer class="footer">
     <span>&copy; 2026 Eli. All rights reserved.</span>
     <span>Designed by Eli.</span>
+    <!-- Footer-centered weather widget (homepage only) -->
+    <div id="weather" class="weather-card footer-weather" aria-live="polite" title="Current weather based on your browser location">
+      <div class="weather-emoji" id="weather-emoji">⏳</div>
+      <div class="weather-info">
+        <div class="weather-temp" id="weather-temp">—°F</div>
+        <div class="weather-desc" id="weather-desc">Loading…</div>
+        <div class="weather-meta" id="weather-meta"></div>
+      </div>
+    </div>
   </footer>
+</body>
+<script>
+// Weather widget: fetches current weather from Open-Meteo using browser geolocation
+(function(){
+  const elTemp = document.getElementById('weather-temp');
+  const elDesc = document.getElementById('weather-desc');
+  const elEmoji = document.getElementById('weather-emoji');
+  const elMeta = document.getElementById('weather-meta');
 
+  function codeToEmoji(code){
+    if(code === 0) return '☀️';
+    if(code >= 1 && code <= 3) return '🌤️';
+    if(code >= 45 && code <= 48) return '🌫️';
+    if((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return '🌧️';
+    if(code >= 71 && code <= 77) return '❄️';
+    if(code >= 95 && code <= 99) return '⛈️';
+    return '☁️';
+  }
+
+  function codeToDesc(code){
+    if(code === 0) return 'Clear';
+    if(code >= 1 && code <= 3) return 'Partly cloudy';
+    if(code >= 45 && code <= 48) return 'Fog';
+    if((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'Rain';
+    if(code >= 71 && code <= 77) return 'Snow';
+    if(code >= 95 && code <= 99) return 'Thunderstorm';
+    return 'Cloudy';
+  }
+
+  function setLoading(){ elTemp.textContent='—°F'; elDesc.textContent='Loading…'; elEmoji.textContent='⏳'; elMeta.textContent=''; }
+  function setError(msg){ elTemp.textContent='—'; elDesc.textContent=msg; elEmoji.textContent='❌'; elMeta.textContent=''; }
+
+  setLoading();
+
+  if(!navigator.geolocation){ setError('Geolocation not supported'); return; }
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try{
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit&timezone=auto`;
+      const resp = await fetch(url);
+      if(!resp.ok) throw new Error('Network error');
+      const data = await resp.json();
+      const cw = data.current_weather;
+      if(!cw) throw new Error('No current weather');
+      const temp = Math.round(cw.temperature);
+      const code = cw.weathercode;
+      elTemp.textContent = `${temp}°F`;
+      elEmoji.textContent = codeToEmoji(code);
+      elDesc.textContent = codeToDesc(code);
+      elMeta.textContent = `Lat ${lat.toFixed(2)}, Lon ${lon.toFixed(2)}`;
+    }catch(e){ setError('Unable to fetch weather'); }
+  }, (err)=>{
+    setError('Location permission denied');
+  }, {timeout:10000, maximumAge:600000});
+})();
+</script>
+</body>
 </body>
 </html>
