@@ -998,6 +998,19 @@ a.contact-direct-value:hover {
   }
 }
 
+/* --- Weather widget styles (moved from index.html) --- */
+.weather-card{display:inline-flex;align-items:center;gap:12px;background:var(--white);padding:10px 14px;border-radius:6px;border:1px solid var(--light);font-family:var(--sans);color:var(--black);max-width:220px}
+.weather-emoji{font-size:24px;line-height:1}
+.weather-info{display:flex;flex-direction:column}
+.weather-temp{font-weight:600;font-size:16px}
+.weather-desc{font-size:13px;color:var(--gray);margin-top:2px}
+.weather-meta{font-size:11px;color:#909090;margin-top:6px}
+@media (max-width:720px){.weather-card{max-width:160px;padding:8px 10px}}
+/* center the widget in the footer on the homepage */
+.footer{position:relative}
+.footer .footer-weather{position:absolute;left:50%;top:calc(1.5rem + 4px);transform:translateX(-50%);z-index:2}
+@media (max-width:720px){.footer .footer-weather{position:static;margin-top:0.75rem;transform:none}}
+
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 900px) {
