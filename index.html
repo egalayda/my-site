@@ -223,7 +223,14 @@
       elMeta.textContent = `Lat ${lat.toFixed(2)}, Lon ${lon.toFixed(2)}`;
     }catch(e){ setError('Unable to fetch weather'); }
   }, (err)=>{
-    setError('Location permission denied');
+    // Friendly fallback messages for geolocation errors
+    if (err && err.code === 1) { // PERMISSION_DENIED
+      setError('Enable location to see your weather.');
+    } else if (err && err.code === 3) { // TIMEOUT
+      setError('Location request timed out');
+    } else {
+      setError('Unable to get location');
+    }
   }, {timeout:10000, maximumAge:600000});
 })();
 </script>
